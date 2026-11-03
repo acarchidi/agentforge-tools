@@ -3,6 +3,7 @@
 DeFi safety tools for AI agents, paid per call in USDC over [x402](https://x402.org) — no API keys, no accounts.
 
 - **Simulate a transaction before signing** — reverts, every asset leaving the wallet, approvals granted, counterparty screening → `proceed / caution / avoid` ($0.005)
+- **Check a signature before signing**: decodes permits, Permit2, Seaport orders, transfer authorizations and x402 payment requests, then catches permit phishing and drainer patterns → `proceed / caution / avoid` ($0.003)
 - **Screen counterparties** — OFAC sanctions, scam/phishing wallets, fresh address-poisoning wallets, 1-100 per call ($0.003 + $0.001/extra)
 - **Check a token before buying** — rug-check metrics + AI risk + gas, with a verdict ($0.025)
 - **New launches, already risk-scored** — Base, Ethereum, Arbitrum; poll with `since` ($0.005)
@@ -31,6 +32,9 @@ const sim = await af.simulateTransaction({
   transactions: [{ to: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913', data: '0xa9059cbb…' }],
 });
 if (sim.verdict === 'avoid') throw new Error(`Refusing to sign: ${sim.reasons}`);
+
+const sig = await af.checkSignature({ signer: '0xYourWallet', typedData: requestFromDapp });
+if (sig.verdict === 'avoid') throw new Error(`Refusing to sign: ${sig.summary}`);
 
 const { results } = await af.checkAddresses({ addresses: [{ address: '0xRecipient', chain: 'base' }] });
 ```

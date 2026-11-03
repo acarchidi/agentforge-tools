@@ -42,6 +42,22 @@ export function agentForgeTools(af: AgentForge): AgentForgeTool[] {
       execute: (args) => af.simulateTransaction(args),
     },
     {
+      name: 'agentforge_check_signature',
+      description:
+        'Check a signature request BEFORE signing it: pass EIP-712 typed data (eth_signTypedData_v4 payload: ERC-20 permit, Permit2, Seaport order, transfer authorization) or an x402 PaymentRequired object. Returns what signing would allow in one sentence, who gets spending power, sanctions/scam screening of every spender and payee, drainer-pattern flags (permits to plain wallets, sell-for-nothing orders, fake USDC domains, over-priced payments), and a proceed/caution/avoid verdict. Costs $0.003 USDC.',
+      parameters: {
+        type: 'object',
+        properties: {
+          typedData: { type: 'object', description: 'EIP-712 typed data with domain, types, primaryType, message (or its JSON string)' },
+          paymentRequired: { type: 'object', description: 'An x402 PaymentRequired object (with accepts[]); pass instead of typedData' },
+          signer: { ...address, description: 'Wallet that would sign' },
+          chain: evmChain,
+          expectedMaxUsd: { type: 'number', description: 'For x402 requests: the most you expect to pay, in USD' },
+        },
+      },
+      execute: (args) => af.checkSignature(args),
+    },
+    {
       name: 'agentforge_check_addresses',
       description:
         'Screen 1-100 counterparty addresses (EVM or Solana) before sending funds or granting approvals: OFAC sanctions, known scam/phishing wallets, labeled protocols, brand-new address-poisoning wallets. Returns block / caution / no_known_issues per address. Costs $0.003 + $0.001 per extra address.',

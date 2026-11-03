@@ -104,6 +104,21 @@ export class AgentForge {
     return this.call('POST', '/v1/tx-simulate', input);
   }
 
+  /**
+   * $0.003 — Check a signature request before signing: EIP-712 typed data (permits, Permit2, Seaport orders,
+   * transfer authorizations) or an x402 PaymentRequired object. Says what signing allows; proceed/caution/avoid.
+   */
+  checkSignature(input: {
+    typedData?: Json | string;
+    paymentRequired?: Json;
+    signer?: string;
+    chain?: EvmChain;
+    /** For x402 requests: flag any price above this many USD. */
+    expectedMaxUsd?: number;
+  }) {
+    return this.call('POST', '/v1/signature-check', input);
+  }
+
   /** $0.003 + $0.001 per extra address — Screen 1-100 EVM/Solana addresses against OFAC sanctions and scam lists. */
   checkAddresses(input: { addresses: Array<{ address: string; chain?: EvmChain | 'solana' }>; chain?: EvmChain | 'solana' }) {
     return this.call('POST', '/v1/address-check', input);

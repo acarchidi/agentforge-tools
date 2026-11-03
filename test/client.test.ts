@@ -18,6 +18,15 @@ describe('AgentForge client', () => {
     expect(JSON.parse(String(init?.body))).toEqual({ from: '0x1', transactions: [{ to: '0x2' }] });
   });
 
+  it('sends signature checks to /v1/signature-check', async () => {
+    const f = mockFetch(200, { verdict: 'avoid' });
+    const af = new AgentForge({ fetch: f as unknown as typeof fetch });
+    const typedData = { domain: { name: 'USD Coin' }, primaryType: 'Permit', message: {} };
+    expect(await af.checkSignature({ typedData, signer: '0x1' })).toEqual({ verdict: 'avoid' });
+    expect(f.mock.calls[0][0]).toBe('https://agentforge-taupe.vercel.app/v1/signature-check');
+    expect(JSON.parse(String(f.mock.calls[0][1]?.body))).toEqual({ typedData, signer: '0x1' });
+  });
+
   it('builds query strings for GET endpoints and skips undefined values', async () => {
     const f = mockFetch();
     const af = new AgentForge({ fetch: f as unknown as typeof fetch });
@@ -64,7 +73,7 @@ describe('ElizaOS plugin', () => {
   });
 
   it('exposes one action per tool and validates only with a key configured', async () => {
-    expect(agentForgePlugin.actions).toHaveLength(8);
+    expect(agentForgePlugin.actions).toHaveLength(9);
     const action = agentForgePlugin.actions!.find((a) => a.name === 'AGENTFORGE_LENDING_HEALTH')!;
     expect(await action.validate(runtime() as any, {} as any)).toBe(false);
     expect(await action.validate(runtime(`0x${'1'.repeat(64)}`) as any, {} as any)).toBe(true);
@@ -86,7 +95,7 @@ describe('AI SDK tools', () => {
     const { agentForgeAiSdkTools } = await import('../src/ai-sdk.js');
     const f = vi.fn(async () => new Response('{"positions":[]}', { status: 200 }));
     const tools = agentForgeAiSdkTools(new AgentForge({ fetch: f as unknown as typeof fetch }));
-    expect(Object.keys(tools)).toHaveLength(8);
+    expect(Object.keys(tools)).toHaveLength(9);
     const lending = tools.agentforge_lending_health as any;
     expect(lending.inputSchema).toBeDefined();
     expect(await lending.execute({ address: '0xabc' }, { toolCallId: '1', messages: [] })).toEqual({ positions: [] });
