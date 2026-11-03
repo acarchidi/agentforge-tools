@@ -80,3 +80,15 @@ describe('ElizaOS plugin', () => {
     expect(callback).toHaveBeenCalled();
   });
 });
+
+describe('AI SDK tools', () => {
+  it('exposes every tool as an AI SDK tool with an input schema and execute', async () => {
+    const { agentForgeAiSdkTools } = await import('../src/ai-sdk.js');
+    const f = vi.fn(async () => new Response('{"positions":[]}', { status: 200 }));
+    const tools = agentForgeAiSdkTools(new AgentForge({ fetch: f as unknown as typeof fetch }));
+    expect(Object.keys(tools)).toHaveLength(8);
+    const lending = tools.agentforge_lending_health as any;
+    expect(lending.inputSchema).toBeDefined();
+    expect(await lending.execute({ address: '0xabc' }, { toolCallId: '1', messages: [] })).toEqual({ positions: [] });
+  });
+});

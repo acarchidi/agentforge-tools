@@ -9,7 +9,7 @@ DeFi safety tools for AI agents, paid per call in USDC over [x402](https://x402.
 - **Batch rug checks** — 2-25 tokens per call ($0.004/token)
 - **Liquidation risk** — Aave v3 on five chains in one call ($0.003)
 
-Ready-made tool definitions for **OpenAI function calling, Vercel AI SDK, LangChain, and ElizaOS**. Payments come from a Base wallet holding USDC (gasless — x402 uses signed authorizations), with a per-call spending cap.
+Ready-made tools for **OpenAI function calling, Vercel AI SDK (`agentforge-tools/ai-sdk`), LangChain, and ElizaOS (`agentforge-tools/eliza`)**. Payments come from a Base wallet holding USDC (gasless — x402 uses signed authorizations), with a per-call spending cap.
 
 ```bash
 npm install github:acarchidi/agentforge-tools
@@ -54,15 +54,14 @@ for (const call of res.choices[0].message.tool_calls ?? []) {
 ## Vercel AI SDK
 
 ```ts
-import { tool, jsonSchema } from 'ai';
-import { AgentForge, agentForgeTools } from 'agentforge-tools';
+import { generateText } from 'ai';
+import { agentForgeAiSdkTools } from 'agentforge-tools/ai-sdk';
 
-const tools = Object.fromEntries(
-  agentForgeTools(new AgentForge({ privateKey: KEY })).map((t) => [
-    t.name,
-    tool({ description: t.description, inputSchema: jsonSchema(t.parameters as any), execute: t.execute }),
-  ]),
-);
+const { text } = await generateText({
+  model,
+  tools: agentForgeAiSdkTools({ privateKey: process.env.AGENT_KEY as `0x${string}`, maxPaymentUsd: 0.1 }),
+  prompt: 'Simulate sending 50 USDC on Base from 0xMyWallet to 0xRecipient. Is it safe?',
+});
 ```
 
 ## LangChain (JS)
