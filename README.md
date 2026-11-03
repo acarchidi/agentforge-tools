@@ -12,7 +12,7 @@ DeFi safety tools for AI agents, paid per call in USDC over [x402](https://x402.
 Ready-made tools for **OpenAI function calling, Vercel AI SDK (`agentforge-tools/ai-sdk`), LangChain, and ElizaOS (`agentforge-tools/eliza`)**. Payments come from a Base wallet holding USDC (gasless — x402 uses signed authorizations), with a per-call spending cap.
 
 ```bash
-npm install github:acarchidi/agentforge-tools
+npm install agentforge-tools
 ```
 
 ## Quick start
