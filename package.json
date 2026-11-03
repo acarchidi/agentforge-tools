@@ -1,0 +1,43 @@
+{
+  "name": "agentforge-tools",
+  "version": "0.1.0",
+  "description": "DeFi safety tools for AI agents, paid per call over x402: simulate a transaction before signing, screen counterparties for sanctions and scams, risk-scored new token launches, rug checks, liquidation risk. Ready-made tool definitions for OpenAI, Vercel AI SDK, LangChain, and ElizaOS.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": { "types": "./dist/index.d.ts", "import": "./dist/index.js" },
+    "./eliza": { "types": "./dist/eliza.d.ts", "import": "./dist/eliza.js" }
+  },
+  "files": ["dist", "README.md", "LICENSE"],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "prepare": "tsc -p tsconfig.json",
+    "test": "vitest run",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "keywords": ["x402", "ai-agents", "defi", "mcp", "agentkit", "elizaos", "langchain", "vercel-ai-sdk", "transaction-simulation", "sanctions-screening", "rug-check", "base", "usdc"],
+  "author": "AgentForge",
+  "license": "MIT",
+  "homepage": "https://agentforge-taupe.vercel.app",
+  "repository": { "type": "git", "url": "git+https://github.com/acarchidi/agentforge-tools.git" },
+  "bugs": { "url": "https://github.com/acarchidi/agentforge-tools/issues" },
+  "engines": { "node": ">=18" },
+  "dependencies": {
+    "@x402/evm": "^2.26.0",
+    "@x402/fetch": "^2.26.0",
+    "viem": "^2.21.0"
+  },
+  "peerDependencies": {
+    "@elizaos/core": ">=1.0.0"
+  },
+  "peerDependenciesMeta": {
+    "@elizaos/core": { "optional": true }
+  },
+  "devDependencies": {
+    "@elizaos/core": "1.7.2",
+    "@types/node": "^22.0.0",
+    "typescript": "^5.6.0",
+    "vitest": "^3.2.0"
+  }
+}
