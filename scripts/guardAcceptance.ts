@@ -18,8 +18,12 @@ const account = privateKeyToAccount(key);
 const guarded = guardAccount(account, { fetch: createPayingFetch({ privateKey: key, maxPaymentUsd: 0.05 }), onReport: (r) => console.log('  report:', r.verdict, (r.reasons ?? []).slice(0, 3)) });
 const base = { chainId: 8453, type: 'eip1559' as const, maxFeePerGas: 1_000_000n, maxPriorityFeePerGas: 1_000n, gas: 60_000n, nonce: 0 };
 
-console.log('1. transfer to OFAC address (Tornado Cash router) …');
-const OFAC = '0xd90e2f925DA726b50C4Ed8D0Fb90Ad053324F31b';
+// Must be on the CURRENT OFAC SDN list. Tornado Cash contracts were delisted
+// in March 2025, so they correctly come back `caution`, not `avoid`. This one
+// is the first Ethereum entry in AgentForge's list (refreshed monthly from the
+// SDN extraction at github.com/0xB10C/ofac-sanctioned-digital-currency-addresses).
+console.log('1. transfer to an OFAC SDN-listed address …');
+const OFAC = '0x0330070FD38EC3BB94F58fa55D40368271E9e54A';
 try {
   await guarded.signTransaction({ ...base, to: OFAC, value: 1n });
   console.log('  FAIL: signed');
