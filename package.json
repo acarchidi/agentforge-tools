@@ -1,7 +1,7 @@
 {
   "name": "agentforge-tools",
-  "version": "0.4.0",
-  "description": "DeFi safety tools for AI agents, paid per call over x402: one-call preflight before any on-chain action, signature checks, transaction simulation, screen counterparties for sanctions and scams, risk-scored new token launches, rug checks, liquidation risk. Ready-made tool definitions for OpenAI, Vercel AI SDK, LangChain, and ElizaOS.",
+  "version": "0.5.0",
+  "description": "AgentForge Guard + tools for AI agents: run a one-call safety preflight on every transaction, signature and x402 payment before the wallet signs (viem, Coinbase AgentKit, x402 clients, Claude Code hooks), paid from prepaid credits with auto top-up. Plus typed tools for OpenAI, Vercel AI SDK, LangChain and ElizaOS.",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -17,6 +17,14 @@
     "./ai-sdk": {
       "types": "./dist/ai-sdk.d.ts",
       "import": "./dist/ai-sdk.js"
+    },
+    "./agentkit": {
+      "types": "./dist/agentkit.d.ts",
+      "import": "./dist/agentkit.js"
+    },
+    "./guard": {
+      "types": "./dist/guard.d.ts",
+      "import": "./dist/guard.js"
     }
   },
   "files": [
@@ -49,7 +57,13 @@
     "eip-712",
     "preflight",
     "bnb-chain",
-    "agent-safety"
+    "agent-safety",
+    "guard",
+    "wallet-guard",
+    "pre-sign",
+    "prompt-injection",
+    "claude-code-hook",
+    "prepaid-credits"
   ],
   "author": "AgentForge",
   "license": "MIT",
@@ -85,7 +99,11 @@
     "@elizaos/core": "1.7.2",
     "@types/node": "^22.0.0",
     "ai": "^7.0.162",
+    "tsx": "^4.23.15",
     "typescript": "^5.6.0",
     "vitest": "^3.2.0"
+  },
+  "bin": {
+    "agentforge-tools": "./dist/cli.js"
   }
 }
