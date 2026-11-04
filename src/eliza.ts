@@ -63,7 +63,7 @@ const placeholder = new AgentForge({ fetch: (() => Promise.reject(new Error('unb
 export const agentForgePlugin: Plugin = {
   name: 'agentforge',
   description:
-    'DeFi safety tools paid per call over x402: signature phishing checks and transaction simulation before signing, sanctions/scam address screening, risk-scored new launches, rug checks, liquidation risk.',
+    'DeFi safety tools paid per call over x402: one-call preflight before any on-chain action, signature phishing checks and transaction simulation before signing, sanctions/scam address screening, risk-scored new launches, rug checks, liquidation risk.',
   actions: agentForgeTools(placeholder).map(toAction),
 };
 

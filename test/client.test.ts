@@ -18,6 +18,14 @@ describe('AgentForge client', () => {
     expect(JSON.parse(String(init?.body))).toEqual({ from: '0x1', transactions: [{ to: '0x2' }] });
   });
 
+  it('sends preflight checks to /v1/preflight', async () => {
+    const f = mockFetch(200, { verdict: 'proceed' });
+    const af = new AgentForge({ fetch: f as unknown as typeof fetch });
+    await af.preflight({ chain: 'bsc', recipients: ['0xabc'] });
+    expect(f.mock.calls[0][0]).toBe('https://agentforge-taupe.vercel.app/v1/preflight');
+    expect(JSON.parse(String(f.mock.calls[0][1]?.body))).toEqual({ chain: 'bsc', recipients: ['0xabc'] });
+  });
+
   it('sends signature checks to /v1/signature-check', async () => {
     const f = mockFetch(200, { verdict: 'avoid' });
     const af = new AgentForge({ fetch: f as unknown as typeof fetch });
@@ -60,7 +68,7 @@ describe('tool definitions', () => {
 
   it('adapt to the OpenAI tools shape and run by name', async () => {
     const openai = toOpenAITools(tools);
-    expect(openai[0]).toMatchObject({ type: 'function', function: { name: 'agentforge_simulate_transaction' } });
+    expect(openai[0]).toMatchObject({ type: 'function', function: { name: 'agentforge_preflight' } });
     expect(await runAgentForgeTool(tools, 'agentforge_lending_health', '{"address":"0xabc"}')).toBe('{"ok":1}');
     await expect(runAgentForgeTool(tools, 'nope', {})).rejects.toThrow(/Unknown/);
   });
@@ -73,7 +81,7 @@ describe('ElizaOS plugin', () => {
   });
 
   it('exposes one action per tool and validates only with a key configured', async () => {
-    expect(agentForgePlugin.actions).toHaveLength(9);
+    expect(agentForgePlugin.actions).toHaveLength(10);
     const action = agentForgePlugin.actions!.find((a) => a.name === 'AGENTFORGE_LENDING_HEALTH')!;
     expect(await action.validate(runtime() as any, {} as any)).toBe(false);
     expect(await action.validate(runtime(`0x${'1'.repeat(64)}`) as any, {} as any)).toBe(true);
@@ -95,7 +103,7 @@ describe('AI SDK tools', () => {
     const { agentForgeAiSdkTools } = await import('../src/ai-sdk.js');
     const f = vi.fn(async () => new Response('{"positions":[]}', { status: 200 }));
     const tools = agentForgeAiSdkTools(new AgentForge({ fetch: f as unknown as typeof fetch }));
-    expect(Object.keys(tools)).toHaveLength(9);
+    expect(Object.keys(tools)).toHaveLength(10);
     const lending = tools.agentforge_lending_health as any;
     expect(lending.inputSchema).toBeDefined();
     expect(await lending.execute({ address: '0xabc' }, { toolCallId: '1', messages: [] })).toEqual({ positions: [] });

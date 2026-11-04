@@ -1,7 +1,7 @@
 {
   "name": "agentforge-tools",
-  "version": "0.3.0",
-  "description": "DeFi safety tools for AI agents, paid per call over x402: check signatures and simulate transactions before signing, screen counterparties for sanctions and scams, risk-scored new token launches, rug checks, liquidation risk. Ready-made tool definitions for OpenAI, Vercel AI SDK, LangChain, and ElizaOS.",
+  "version": "0.4.0",
+  "description": "DeFi safety tools for AI agents, paid per call over x402: one-call preflight before any on-chain action, signature checks, transaction simulation, screen counterparties for sanctions and scams, risk-scored new token launches, rug checks, liquidation risk. Ready-made tool definitions for OpenAI, Vercel AI SDK, LangChain, and ElizaOS.",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -46,7 +46,10 @@
     "usdc",
     "signature-check",
     "permit-phishing",
-    "eip-712"
+    "eip-712",
+    "preflight",
+    "bnb-chain",
+    "agent-safety"
   ],
   "author": "AgentForge",
   "license": "MIT",

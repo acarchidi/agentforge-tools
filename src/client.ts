@@ -12,7 +12,9 @@ import { privateKeyToAccount } from 'viem/accounts';
 
 export const DEFAULT_BASE_URL = 'https://agentforge-taupe.vercel.app';
 
-export type EvmChain = 'ethereum' | 'base' | 'arbitrum' | 'optimism' | 'polygon';
+export type EvmChain =
+  | 'ethereum' | 'base' | 'arbitrum' | 'optimism' | 'polygon'
+  | 'bsc' | 'avalanche' | 'linea' | 'unichain' | 'sonic';
 export type Json = Record<string, unknown>;
 
 export class AgentForgeError extends Error {
@@ -99,6 +101,25 @@ export class AgentForge {
     return body as T;
   }
 
+  /**
+   * $0.008 (+ $0.004 per token in `tokens`) — Is this action safe? One call before any on-chain action:
+   * transactions simulated, signatures checked for phishing, recipients screened, tokens rug-checked
+   * (including tokens the simulation shows the wallet receiving). One proceed/caution/avoid verdict.
+   */
+  preflight(input: {
+    chain?: EvmChain;
+    /** Wallet taking the action; required with `transactions`. */
+    from?: string;
+    transactions?: Tx[];
+    typedData?: Json | string;
+    paymentRequired?: Json;
+    expectedMaxUsd?: number;
+    recipients?: string[];
+    tokens?: string[];
+  }) {
+    return this.call('POST', '/v1/preflight', input);
+  }
+
   /** $0.005 — Simulate 1-5 EVM transactions before signing: reverts, asset changes, approvals, counterparty screening, proceed/caution/avoid. */
   simulateTransaction(input: { from: string; transactions: Tx[]; chain?: EvmChain }) {
     return this.call('POST', '/v1/tx-simulate', input);
@@ -125,12 +146,12 @@ export class AgentForge {
   }
 
   /** $0.025 — Pre-trade token check: rug-check metrics + AI risk assessment + gas, with a verdict. */
-  tradeCheck(input: { address: string; chain?: 'ethereum' | 'base' | 'polygon' | 'arbitrum' }) {
+  tradeCheck(input: { address: string; chain?: EvmChain }) {
     return this.call('POST', '/v1/trade-check', input);
   }
 
   /** $0.005 — Newly launched tokens, already risk-scored. Pass the previous nextSince as `since` to poll. */
-  launches(input: { chain?: 'base' | 'ethereum' | 'arbitrum'; since?: string; minLiquidityUsd?: number; maxRiskScore?: number; limit?: number } = {}) {
+  launches(input: { chain?: 'base' | 'ethereum' | 'arbitrum' | 'bsc'; since?: string; minLiquidityUsd?: number; maxRiskScore?: number; limit?: number } = {}) {
     return this.call('GET', '/v1/launches', input);
   }
 
@@ -139,7 +160,7 @@ export class AgentForge {
     return this.call('POST', '/v1/risk-batch', input);
   }
 
-  /** $0.003 — Aave v3 liquidation risk across five chains. */
+  /** $0.003 — Aave v3 liquidation risk across nine chains. */
   lendingHealth(input: { address: string; chain?: EvmChain | 'all' }) {
     return this.call('GET', '/v1/lending/health', input);
   }

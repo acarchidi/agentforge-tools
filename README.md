@@ -2,13 +2,14 @@
 
 DeFi safety tools for AI agents, paid per call in USDC over [x402](https://x402.org) — no API keys, no accounts.
 
+- **Preflight: is this action safe?** One call before any on-chain action: transactions simulated, signatures checked, recipients screened, tokens rug-checked → one `proceed / caution / avoid` ($0.008 + $0.004 per token)
 - **Simulate a transaction before signing** — reverts, every asset leaving the wallet, approvals granted, counterparty screening → `proceed / caution / avoid` ($0.005)
 - **Check a signature before signing**: decodes permits, Permit2, Seaport orders, transfer authorizations and x402 payment requests, then catches permit phishing and drainer patterns → `proceed / caution / avoid` ($0.003)
 - **Screen counterparties** — OFAC sanctions, scam/phishing wallets, fresh address-poisoning wallets, 1-100 per call ($0.003 + $0.001/extra)
 - **Check a token before buying** — rug-check metrics + AI risk + gas, with a verdict ($0.025)
 - **New launches, already risk-scored** — Base, Ethereum, Arbitrum; poll with `since` ($0.005)
 - **Batch rug checks** — 2-25 tokens per call ($0.004/token)
-- **Liquidation risk** — Aave v3 on five chains in one call ($0.003)
+- **Liquidation risk** — Aave v3 on nine chains in one call ($0.003)
 
 Ready-made tools for **OpenAI function calling, Vercel AI SDK (`agentforge-tools/ai-sdk`), LangChain, and ElizaOS (`agentforge-tools/eliza`)**. Payments come from a Base wallet holding USDC (gasless — x402 uses signed authorizations), with a per-call spending cap.
 
@@ -26,12 +27,14 @@ const af = new AgentForge({
   maxPaymentUsd: 0.1, // refuse any single payment above $0.10
 });
 
-const sim = await af.simulateTransaction({
+// One call before any on-chain action.
+const check = await af.preflight({
   chain: 'base',
   from: '0xYourWallet',
   transactions: [{ to: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913', data: '0xa9059cbb…' }],
+  recipients: ['0xRecipient'],
 });
-if (sim.verdict === 'avoid') throw new Error(`Refusing to sign: ${sim.reasons}`);
+if (check.verdict === 'avoid') throw new Error(`Refusing: ${check.summary}`);
 
 const sig = await af.checkSignature({ signer: '0xYourWallet', typedData: requestFromDapp });
 if (sig.verdict === 'avoid') throw new Error(`Refusing to sign: ${sig.summary}`);

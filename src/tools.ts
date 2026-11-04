@@ -14,11 +14,33 @@ export interface AgentForgeTool {
   execute: (args: any) => Promise<unknown>;
 }
 
-const evmChain = { type: 'string', enum: ['ethereum', 'base', 'arbitrum', 'optimism', 'polygon'] };
+const evmChain = { type: 'string', enum: ['ethereum', 'base', 'arbitrum', 'optimism', 'polygon', 'bsc', 'avalanche', 'linea', 'unichain', 'sonic'] };
 const address = { type: 'string', pattern: '^0x[a-fA-F0-9]{40}$' };
 
 export function agentForgeTools(af: AgentForge): AgentForgeTool[] {
   return [
+    {
+      name: 'agentforge_preflight',
+      description:
+        'Is this action safe? Call ONCE before any on-chain action (send, swap, approval, signature, x402 payment). Pass whatever you are about to do: transactions (simulated: reverts, assets out, approvals), EIP-712 typed data or an x402 PaymentRequired (checked for permit phishing), recipients (screened against OFAC sanctions and scam lists), tokens to buy (rug-checked; tokens the simulation shows you receiving are rug-checked automatically). Returns one proceed/caution/avoid verdict with reasons. Costs $0.008 + $0.004 per token in `tokens`.',
+      parameters: {
+        type: 'object',
+        properties: {
+          chain: { ...evmChain, description: 'Defaults to the typed data chainId, else base' },
+          from: { ...address, description: 'Wallet taking the action (required with transactions)' },
+          transactions: {
+            type: 'array', maxItems: 5,
+            items: { type: 'object', required: ['to'], properties: { to: address, data: { type: 'string' }, value: { type: 'string' } } },
+          },
+          typedData: { type: 'object', description: 'EIP-712 typed data about to be signed' },
+          paymentRequired: { type: 'object', description: 'x402 PaymentRequired about to be paid' },
+          expectedMaxUsd: { type: 'number' },
+          recipients: { type: 'array', maxItems: 20, items: { type: 'string' }, description: 'Addresses about to receive funds or permissions' },
+          tokens: { type: 'array', maxItems: 5, items: address, description: 'Tokens about to be bought' },
+        },
+      },
+      execute: (args) => af.preflight(args),
+    },
     {
       name: 'agentforge_simulate_transaction',
       description:
@@ -78,17 +100,17 @@ export function agentForgeTools(af: AgentForge): AgentForgeTool[] {
       name: 'agentforge_trade_check',
       description:
         'Check a token before buying it: quantitative rug check (owner powers, holder concentration, liquidity), AI risk assessment with market data, and current gas, with a proceed/caution/avoid verdict. Costs $0.025 USDC.',
-      parameters: { type: 'object', required: ['address'], properties: { address, chain: { type: 'string', enum: ['ethereum', 'base', 'polygon', 'arbitrum'], default: 'ethereum' } } },
+      parameters: { type: 'object', required: ['address'], properties: { address, chain: { ...evmChain, default: 'ethereum' } } },
       execute: (args) => af.tradeCheck(args),
     },
     {
       name: 'agentforge_new_launches',
       description:
-        'List newly launched tokens on Base, Ethereum, or Arbitrum, each already risk-scored (verification, mint/blacklist/tax powers, upgradeable proxy, supply held off-pool, honeypot trading pattern). For polling, pass the previous response\'s nextSince as since. Costs $0.005 USDC.',
+        'List newly launched tokens on Base, Ethereum, Arbitrum, or BNB Chain, each already risk-scored (verification, mint/blacklist/tax powers, upgradeable proxy, supply held off-pool, honeypot trading pattern). For polling, pass the previous response\'s nextSince as since. Costs $0.005 USDC.',
       parameters: {
         type: 'object',
         properties: {
-          chain: { type: 'string', enum: ['base', 'ethereum', 'arbitrum'], default: 'base' },
+          chain: { type: 'string', enum: ['base', 'ethereum', 'arbitrum', 'bsc'], default: 'base' },
           since: { type: 'string', format: 'date-time' },
           minLiquidityUsd: { type: 'number', default: 1000 },
           maxRiskScore: { type: 'integer', minimum: 0, maximum: 100 },
@@ -113,7 +135,7 @@ export function agentForgeTools(af: AgentForge): AgentForgeTool[] {
     {
       name: 'agentforge_lending_health',
       description:
-        'How close a wallet is to liquidation on Aave v3 across Ethereum, Base, Arbitrum, Optimism, and Polygon: collateral, debt, health factor, status, and how far collateral can fall before liquidation. Costs $0.003 USDC.',
+        'How close a wallet is to liquidation on Aave v3 across Ethereum, Base, Arbitrum, Optimism, Polygon, BNB Chain, Avalanche, Linea, and Sonic: collateral, debt, health factor, status, and how far collateral can fall before liquidation. Costs $0.003 USDC.',
       parameters: { type: 'object', required: ['address'], properties: { address, chain: { type: 'string', enum: [...evmChain.enum, 'all'], default: 'all' } } },
       execute: (args) => af.lendingHealth(args),
     },
