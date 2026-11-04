@@ -11,6 +11,8 @@ DeFi safety tools for AI agents, paid per call in USDC over [x402](https://x402.
 - **Batch rug checks** — 2-25 tokens per call ($0.004/token)
 - **Liquidation risk** — Aave v3 on nine chains in one call ($0.003)
 
+**Guard**: wrap a viem account, wallet client, AgentKit wallet provider or x402 client and every signature runs preflight first; `avoid` is refused before signing (see below).
+
 Ready-made tools for **OpenAI function calling, Vercel AI SDK (`agentforge-tools/ai-sdk`), LangChain, and ElizaOS (`agentforge-tools/eliza`)**. Payments come from a Base wallet holding USDC (gasless — x402 uses signed authorizations), with a per-call spending cap.
 
 ```bash
@@ -43,6 +45,36 @@ const { results } = await af.checkAddresses({ addresses: [{ address: '0xRecipien
 ```
 
 Already have an x402 fetch (e.g. a CDP wallet)? Pass it instead: `new AgentForge({ fetch: myPayingFetch })`.
+
+## Guard: refuse to sign what preflight calls `avoid`
+
+The tools above are things an agent *can* call. The Guard makes the check happen whether or not the model remembers: every transaction, signature and x402 payment the wallet produces goes through `/v1/preflight` first, and `avoid` throws before anything is signed. A prompt-injected agent can want to drain its wallet; it cannot talk the Guard out of refusing.
+
+```ts
+import { privateKeyToAccount } from 'viem/accounts';
+import { createWalletClient, http } from 'viem';
+import { base } from 'viem/chains';
+import { guardAccount, guardWalletClient, agentForgePaymentHook } from 'agentforge-tools';
+
+const KEY = process.env.AGENT_PRIVATE_KEY as `0x${string}`;
+
+// 1. viem account: signTransaction / signTypedData are guarded.
+const account = guardAccount(privateKeyToAccount(KEY), { privateKey: KEY });
+
+// 2. viem wallet client: sendTransaction, writeContract, signTypedData are guarded.
+const wallet = guardWalletClient(createWalletClient({ account, chain: base, transport: http() }), { privateKey: KEY });
+
+// 3. x402 client: every payment's PaymentRequired is checked (payTo sanctions, real USDC, price vs listing).
+x402Client.onBeforePaymentCreation(agentForgePaymentHook({ privateKey: KEY, expectedMaxUsd: 0.1 }));
+```
+
+Coinbase AgentKit: `import { guardWalletProvider } from 'agentforge-tools/agentkit'` and wrap any EVM wallet provider before `AgentKit.from(...)`. Older x402 clients without hooks: `guardPayingFetch(payingFetch, opts)`. Claude Code / Cursor: `npx agentforge-tools hook` prints a `PreToolUse` hook that blocks tool calls carrying an unsafe transaction.
+
+Options: `onCaution: 'allow' | 'block' | (report) => boolean` (default allow, logged), `failOpen` (default **false**: if AgentForge is unreachable the action is refused; a guard that fails open is theater), `onReport` for audit logs, `chain` when it cannot be inferred.
+
+**Paying for checks.** Each check is $0.008. The Guard pays from prepaid credits: `privateKey` creates a `createCreditFetch` that buys a $5 pack (worth $5.75) when the balance drops under $0.50 and signs each call instead of settling it, so there is no per-call fee. Tune it with `credits: { autoTopUp: { pack: 20, whenBelowUsd: 1 } }`, or `autoTopUp: false` to fall back to per-call x402.
+
+**Earn from your integration.** Set `credits: { referrer: '0xYourWallet' }` and you receive 10% of every credit pack your users' agents buy, for as long as they keep buying, as AgentForge credit; they get 5% extra. If you ship a plugin, framework integration or template, put your wallet there.
 
 ## OpenAI function calling
 
